@@ -9,10 +9,13 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -23,7 +26,14 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.memorableplace.databinding.ActivityMapsBinding;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+import org.jetbrains.annotations.NotNull;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapLongClickListener {
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
@@ -33,7 +43,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void centerMapOnLocation(Location location, String title) {
         LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
-        mMap.clear();
+//        mMap.clear();
         mMap.addMarker(new MarkerOptions().position(userLocation).title(title));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 12));
     }
@@ -61,13 +71,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+        assert mapFragment != null;
         mapFragment.getMapAsync(this);
 
     }
 
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(@NotNull GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setOnMapLongClickListener(this);
 
         Intent intent = getIntent();
         if (intent.getIntExtra("placeNumber", 0) == 0) {
@@ -86,5 +98,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
             }
         }
+    }
+
+    @Override
+    public void onMapLongClick(@NonNull @NotNull LatLng latLng) {
+        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+        String address = "";
+        try {
+            List<Address> addressList = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+            if (addressList != null && addressList.size() > 0) {
+                if (addressList.get(0).getThoroughfare() != null)
+                    address += addressList.get(0).getThoroughfare()+" ";
+
+                if( address.equals("Unnamed Road ")){
+                    if(addressList.get(0).getPostalCode() != null)
+                        address = addressList.get(0).getPostalCode()+ " ";
+
+                    if(addressList.get(0).getAdminArea() != null)
+                        address += addressList.get(0).getAdminArea();
+
+
+                }
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (address.equals("")){
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm yyyy-MM-dd");
+            address+=sdf.format(new Date());
+        }
+        mMap.addMarker(new MarkerOptions().position(latLng).title(address));
+
+
     }
 }
