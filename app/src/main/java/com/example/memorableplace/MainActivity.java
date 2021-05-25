@@ -38,7 +38,6 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
                 intent.putExtra("placeNumber", position);
-                Log.i("placeNumber", Integer.toString(position));
                 startActivity(intent);
             }
         });
