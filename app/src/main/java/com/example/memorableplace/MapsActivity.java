@@ -43,7 +43,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void centerMapOnLocation(Location location, String title) {
         LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
-//        mMap.clear();
         mMap.addMarker(new MarkerOptions().position(userLocation).title(title));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 12));
     }
@@ -97,6 +96,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             } else {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
             }
+        }else {
+            Location placeLocation = new Location(LocationManager.GPS_PROVIDER);
+            placeLocation.setLatitude(MainActivity.location.get(intent.getIntExtra("placeNumber", 0)).latitude);
+            placeLocation.setLongitude(MainActivity.location.get(intent.getIntExtra("placeNumber", 0)).longitude);
+
+            centerMapOnLocation(placeLocation, MainActivity.places.get(intent.getIntExtra("placeNumber", 0)));
         }
     }
 
@@ -116,21 +121,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     if(addressList.get(0).getAdminArea() != null)
                         address += addressList.get(0).getAdminArea();
-
-
                 }
-
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         if (address.equals("")){
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm yyyy-MM-dd");
             address+=sdf.format(new Date());
         }
         mMap.addMarker(new MarkerOptions().position(latLng).title(address));
 
+        MainActivity.places.add(address);
+        MainActivity.location.add(latLng);
+        MainActivity.arrayAdapter.notifyDataSetChanged();
 
+        Toast.makeText(this, "Location Saved :)", Toast.LENGTH_SHORT).show();
     }
 }
